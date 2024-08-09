@@ -6,7 +6,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 require('dotenv').config();
 
-
 // In-memory store for tokens (replace with a proper database in production)
 const tokensStore = {};
 
@@ -43,12 +42,55 @@ async function exchangeCodeForTokens(code) {
         },
       }
     );
-    return response.data;
+
+    const { access_token, refresh_token, expires_in } = response.data;
+
+    // Calculate the expiration time based on the expires_in value
+    const expirationTime = Date.now() + expires_in * 1000;
+
+    return { access_token, refresh_token, expirationTime };
   } catch (error) {
     // Enhanced error logging
     const errorMessage = error.response
       ? `Error exchanging authorization code: ${error.response.status} - ${error.response.statusText}: ${JSON.stringify(error.response.data)}`
       : `Error exchanging authorization code: ${error.message}`;
+
+    console.error(errorMessage); // Log the error for debugging
+    throw new Error(errorMessage);
+  }
+}
+
+// Function to refresh the access token
+async function refreshAccessToken(refreshToken) {
+  const requestBody = querystring.stringify({
+    refresh_token: refreshToken,
+    client_id: CLIENT_ID,
+    client_secret: CLIENT_SECRET,
+    grant_type: 'refresh_token',
+  });
+
+  try {
+    const response = await axios.post(
+      'https://oauth2.googleapis.com/token',
+      requestBody,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+
+    const { access_token, expires_in } = response.data;
+
+    // Update expiration time
+    const expirationTime = Date.now() + expires_in * 1000;
+
+    return { access_token, expirationTime };
+  } catch (error) {
+    // Enhanced error logging
+    const errorMessage = error.response
+      ? `Error refreshing access token: ${error.response.status} - ${error.response.statusText}: ${JSON.stringify(error.response.data)}`
+      : `Error refreshing access token: ${error.message}`;
 
     console.error(errorMessage); // Log the error for debugging
     throw new Error(errorMessage);
@@ -75,6 +117,31 @@ async function listDriveFiles(accessToken) {
   }
 }
 
+// Middleware to check and refresh the access token if needed
+async function ensureValidAccessToken(req, res, next) {
+  const userTokens = tokensStore['user_id'];
+
+  if (!userTokens) {
+    return res.status(404).send('Tokens not found');
+  }
+
+  const { access_token, refresh_token, expirationTime } = userTokens;
+
+  // Check if the access token has expired
+  if (Date.now() >= expirationTime) {
+    try {
+      const { access_token: newAccessToken, expirationTime: newExpirationTime } = await refreshAccessToken(refresh_token);
+      // Update the token store with the new access token and expiration time
+      tokensStore['user_id'] = { ...userTokens, access_token: newAccessToken, expirationTime: newExpirationTime };
+    } catch (error) {
+      return res.status(500).send('Failed to refresh access token');
+    }
+  }
+
+  // Proceed to the next middleware or route
+  next();
+}
+
 // Endpoint to handle the redirect and capture the authorization code
 app.get('/oauth2callback', async (req, res) => {
   const authorizationCode = req.query.code;
@@ -84,10 +151,10 @@ app.get('/oauth2callback', async (req, res) => {
   }
 
   try {
-    const { access_token, refresh_token } = await exchangeCodeForTokens(authorizationCode);
+    const { access_token, refresh_token, expirationTime } = await exchangeCodeForTokens(authorizationCode);
 
     // Save the tokens (for demo purposes, using an in-memory store)
-    tokensStore['user_id'] = { access_token, refresh_token };
+    tokensStore['user_id'] = { access_token, refresh_token, expirationTime };
 
     // Log tokens for debugging
     console.log('Tokens stored:', tokensStore['user_id']);
@@ -107,7 +174,7 @@ app.get('/oauth2callback', async (req, res) => {
 });
 
 // Endpoint to get access token (for Zoho CRM)
-app.get('/get-access-token', (req, res) => {
+app.get('/get-access-token', ensureValidAccessToken, (req, res) => {
   const userTokens = tokensStore['user_id'];
   if (userTokens && userTokens.access_token) {
     res.json({ access_token: userTokens.access_token });
