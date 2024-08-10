@@ -128,7 +128,7 @@ async function ensureValidAccessToken(req, res, next) {
   const { access_token, refresh_token, expirationTime } = userTokens;
 
   // Check if the access token has expired
-  if (Date.now() >= expirationTime) {
+  if (Date.now() >= expirationTime - 60000) { // 1 minute buffer before actual expiration
     try {
       const { access_token: newAccessToken, expirationTime: newExpirationTime } = await refreshAccessToken(refresh_token);
       // Update the token store with the new access token and expiration time
