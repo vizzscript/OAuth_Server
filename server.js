@@ -133,6 +133,7 @@ async function ensureValidAccessToken(req, res, next) {
       const { access_token: newAccessToken, expirationTime: newExpirationTime } = await refreshAccessToken(refresh_token);
       // Update the token store with the new access token and expiration time
       tokensStore['user_id'] = { ...userTokens, access_token: newAccessToken, expirationTime: newExpirationTime };
+      access_token = newAccessToken;
     } catch (error) {
       return res.status(500).send('Failed to refresh access token');
     }
