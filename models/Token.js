@@ -8,4 +8,3 @@ const tokenSchema = new Schema({
 });
 
 module.exports = model('Token', tokenSchema);
-//new changes

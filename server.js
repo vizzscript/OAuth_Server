@@ -1,8 +1,6 @@
 const express = require('express');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const { authenticateToken } = require('./middleware/authMiddleware');
 
 require('dotenv').config();
 
@@ -21,8 +19,9 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-app.use('/auth', authenticateToken, authRoutes);
-app.use('/users', userRoutes);
+app.use('/auth', authRoutes);
+
+
 
 // Start the server
 app.listen(PORT, () => {
