@@ -12,6 +12,11 @@ connectDB();
 // Middleware for parsing JSON bodies
 app.use(express.json());
 
+// Home route
+app.get('/', (req, res) => {
+  res.send('Welcome to Authorization 2.0');
+});
+
 // Routes
 app.use('/auth', authRoutes);
 

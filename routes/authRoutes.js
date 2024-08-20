@@ -1,8 +1,13 @@
 const express = require('express');
 const { ensureValidAccessToken } = require('../controllers/tokenController');
-const { oauth2callback, exchangeCodeForTokens, refreshAccessToken } = require('../controllers/authController');
+const { oauth2callback, refreshAccessToken } = require('../controllers/authController');
 
 const router = express.Router();
+
+// Home route
+router.get('/', (req, res) => {
+  res.send('Welcome to Authorization 2.0');
+});
 
 // Route to handle OAuth2 callback and exchange authorization code for tokens
 router.get('/oauth2callback', oauth2callback);
