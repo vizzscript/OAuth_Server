@@ -32,11 +32,11 @@ const exchangeCodeForTokens = async (code, userId) => {
 };
 
 // Save tokens to the database
-const saveTokens = async (userId, accessToken, refreshToken, expirationTime) => {
+const saveTokens = async (userId, access_token, refresh_token, expirationTime) => {
   try {
     await Token.updateOne(
       { userId },
-      { accessToken, refreshToken, expirationTime },
+      { access_token, refresh_token, expirationTime },
       { upsert: true }
     );
   } catch (error) {
@@ -49,11 +49,9 @@ const saveTokens = async (userId, accessToken, refreshToken, expirationTime) => 
 const refreshAccessToken = async (userId) => {
   try {
     const tokenDoc = await Token.findOne({ userId });
-
     if (!tokenDoc) throw new Error('Token not found for user');
 
     const { refresh_token } = tokenDoc;
-
     const requestBody = querystring.stringify({
       client_id: process.env.CLIENT_ID,
       client_secret: process.env.CLIENT_SECRET,
@@ -73,14 +71,20 @@ const refreshAccessToken = async (userId) => {
     return access_token;
   } catch (error) {
     console.error('Error refreshing token:', error.response ? error.response.data : error.message);
-    throw error;
+    // Additional handling: Invalidate session, alert user, etc.
+    throw new Error('Could not refresh access token');
   }
 };
 
+const getUserId = (req) => {
+  // Example logic: Extract userId from request, session, or token
+  return req.user ? req.user.id : 'default_user_id';
+};
 // OAuth2 callback handler
 const oauth2callback = async (req, res) => {
   const { code } = req.query;
-  const userId = 'user_id'; // Adjust this based on your user management logic
+  const userId = getUserId(req);
+ // Adjust this based on your user management logic
 
   try {
     const tokens = await exchangeCodeForTokens(code, userId);

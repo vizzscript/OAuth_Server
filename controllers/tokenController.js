@@ -1,14 +1,21 @@
 const Token = require('../models/Token');
 const { refreshAccessToken } = require('./authController');
 
+const getUserId = (req) => {
+  // Example logic: Extract userId from request, session, or token
+  return req.user ? req.user.id : 'default_user_id';
+};
+
 // Middleware to ensure a valid access token
 const ensureValidAccessToken = async (req, res, next) => {
-  const userId = 'user_id'; // Adjust this based on your user management logic
+  const userId = getUserId(req);
+
 
   try {
     let tokenDoc = await Token.findOne({ userId });
 
     if (!tokenDoc) {
+      console.error(`No token found for user: ${userId}`);
       return res.status(401).send('No token found for user');
     }
 
@@ -19,7 +26,7 @@ const ensureValidAccessToken = async (req, res, next) => {
       tokenDoc = await Token.findOne({ userId }); // Fetch the updated token
     }
 
-    req.access_token = tokenDoc.accessToken;
+    req.access_token = tokenDoc.access_token;
     next();
   } catch (error) {
     console.error('Error in token validation middleware:', error.message);
