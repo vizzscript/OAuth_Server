@@ -1,1 +1,1 @@
-This is backend server used for integration of Zoho CRM and Google for OAuth2.0.
+This is backend server used for integration of Zoho CRM and Google using OAuth2.0.
