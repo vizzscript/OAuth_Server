@@ -26,6 +26,7 @@ router.get('/refresh-token', async (req, res) => {
   const userId = getUserId(req);
 
 
+
   try {
     const newAccessToken = await refreshAccessToken(userId);
     res.json({ access_token: newAccessToken });
@@ -34,5 +35,6 @@ router.get('/refresh-token', async (req, res) => {
     res.status(500).send('Error refreshing token');
   }
 });
+
 
 module.exports = router;

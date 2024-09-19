@@ -18,6 +18,17 @@ app.get('/', (req, res) => {
   res.send('Welcome to Authorization 2.0');
 });
 
+// Policy route
+app.get('/policy', (req, res) => {
+  res.send(`
+    <html>
+      <body>
+        <p>You can view our policy <a href="https://app.websitepolicies.com/policies/view/rctwx9nf" target="_blank">here</a>.</p>
+      </body>
+    </html>
+  `);
+});
+
 // Routes
 app.use('/auth', authRoutes);
 
