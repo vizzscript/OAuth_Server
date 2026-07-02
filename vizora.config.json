@@ -1,0 +1,9 @@
+{
+    "name": "oauth",
+    "repo": "https://github.com/vizzscript/OAuth_Server.git",
+    "branch": "master",
+    "server": "vizzscript@home-server",
+    "basePath": "/home/vizzscript/api",
+    "preStart": "npm install nodemon --no-save",
+    "start": "npm run dev"
+}
