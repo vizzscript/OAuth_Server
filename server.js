@@ -1,17 +1,15 @@
 const express = require('express');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
-
-require('dotenv').config();
+const { port } = require('./config/env');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Connect to MongoDB
 connectDB();
 
 // Middleware for parsing JSON bodies
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // Home route
 app.get('/', (req, res) => {
@@ -32,9 +30,11 @@ app.get('/policy', (req, res) => {
 // Routes
 app.use('/auth', authRoutes);
 
-
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
